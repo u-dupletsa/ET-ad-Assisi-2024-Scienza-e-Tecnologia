@@ -22,7 +22,7 @@ date: 2024-02-20
 
 ## Matched filtering
 
-The gravitational-wave detection problem: we have data 
+The gravitational-wave **detection** problem: we have data 
 
 $$ d(t) = \underbrace{h_\theta(t)}_{\text{GW}} + \underbrace{
     n _{\text{Gaussian}} (t) + 
@@ -32,19 +32,21 @@ $$
 
 and we want to find where $h(t)$ is, while typically $|h| \ll |n|$.
 The Gaussian component has a spectral density $S_n(f)$.
-Let's assume we want to use a linear filter:
+Let's assume we want to use a **linear filter**, so that in the time domain it reads:
 
 $$ \hat{\rho}(\tau ) = \int d(t + \tau) f(t) \text{d}t
 $$
 
+for some function $f(t)$.
+
 ---
 
-We want to maximize the "distinguishability" of the signal: we can quantify it with the signal-to-noise ratio
+We want to maximize the "**distinguishability**" of the signal: we can quantify it with the signal-to-noise ratio
 
 $$ \frac{S}{N} = \frac{\hat{\rho} (\text{a signal is present})}{ \text{root-mean-square of } \hat{\rho}}
 $$
 
-Ignoring the non-Gaussian part of the noise, the optimal solution is $\hat{\rho} \propto (d|h)$, where
+Ignoring the non-Gaussian part of the noise, the **optimal** solution is $\hat{\rho} \propto (d|h)$, where
 
 $$ (a | b) = 4 \Re \int_0^\infty \frac{a(f) b^*(f)}{S_n(f)}\text{d}f \,,
 $$
@@ -53,7 +55,7 @@ $$
 
 ## Optimal signal-to-noise ratio
 
-The signal-to-noise ratio statistic is 
+The **signal-to-noise** ratio statistic is 
 
 $$ \rho = \frac{S}{N} = \frac{(d|h)}{\sqrt{(h|h)}}
 $$
@@ -79,7 +81,7 @@ Without time shifts nor non-Gaussianities, the SNR would simply follow
 a $\chi^2$ distribution with two degrees of freedom:
 "five $\sigma$" significance with a threshold of $\rho = 5.5$. 
 
-In real data this has to be estimated through injections:
+In real data this has to be estimated through **injections**:
 
 $$ \text{FAR} = \text{FAR}_8 \exp \left( - \frac{\rho - 8}{\alpha}\right) \,.
 $$
@@ -90,26 +92,26 @@ For BNS in O1: $\alpha = 0.13$ and $\text{FAR}_8 = 30000 \text{yr}^{-1}$.
 
 ## Gravitational wave data analysis
 
-Suppose we measure $d = h_\theta + n$, where our model for $h_\theta = h(t; \theta)$ depends on several parameter (typically, between 10 and 15).
+Suppose we measure $d = h_\theta + n$, where our model for $h_\theta = h(t; \theta)$ depends on several parameters (typically, between 10 and 15).
 
-We can estimate the parameters $\theta$ by exploring the posterior distribution 
+We can estimate the parameters $\theta$ by exploring the **posterior distribution** 
 
 $$ p(\theta | d) = \mathcal{L}(d | \theta ) \pi (\theta ) = \mathcal{N} \exp \left( (d | h_\theta) - \frac{1}{2} (h_\theta | h_\theta) \right) \pi (\theta )\,,
 $$
 
-where $\pi (\theta )$ is our prior distribution on the parameters.
+where $\pi (\theta )$ is our **prior distribution** on the parameters.
 We are neglecting non-Gaussianities in the noise, and assuming its spectral density is known!
 
 ---
 
-The posterior is explored stochastically (with MCMC, nested sampling...) yielding many samples $\theta_i$ distributed according to $p(\theta | d)$, with which can compute summary statistics:
+The posterior is explored **stochastically** (with MCMC, nested sampling...) yielding many samples $\theta_i$ distributed according to $p(\theta | d)$, with which can compute summary statistics:
 
 - mean $\langle \theta_i \rangle$, 
 - variance $\sigma_i^2 = \langle (\theta_i- \langle \theta_i\rangle)^2 \rangle$, 
 - covariance $\mathcal{C}_{ij} =\langle (\theta_i- \langle \theta_i\rangle) (\theta_j- \langle \theta_j\rangle) \rangle$.
 
 At this stage, we are not making any approximation, and the 
-covariance matrix is just a summary tool - the full posterior is still available.
+covariance matrix is just a **summary** tool - the full posterior is still available.
 
 ---
 
@@ -142,12 +144,12 @@ corner.corner(np.vstack((np.arccos(cosi), dist)).T, labels=['Inclination angle [
 
 ## Parameter dependence of CBC signals
 
-A discussion of the parameters a BNS signal depends on, with relative error
-($\sigma _x / x$) values computed from the parameter estimation of GW170817.
+A list of the parameters a BNS signal depends on, with **relative error**
+($\sigma _x / x$) values computed from the parameter estimation of **GW170817**.
 
 ---
 
-### Intrinsic parameters
+## Intrinsic parameters
 
 - __masses__ $m_1$ and $m_2$: $\sigma _x / x \sim 10\%$, 
 - __chirp mass__ $\mathcal{M}$: $\sigma _x / x \sim 0.1\%$.
@@ -185,7 +187,7 @@ $$
 
 ---
 
-### Extrinsic parameters
+## Extrinsic parameters
 
 - __distance__ $d_L$ $\sigma _x / x \sim 20\%$,
 - degeneracy with the __inclination__ of the source, $\iota$:  $\sigma _x / x \sim 10\%$,
@@ -196,29 +198,29 @@ $$
 
 ---
 
-$1 \sigma$ __sky area__ in steradians: 
+The $1 \sigma$ __sky area__ in steradians can be written in the Gaussian case as: 
 $$ \Delta \Omega _{1 \sigma} = 2 \pi |\cos(\text{dec})| \sqrt{\sigma _{\text{ra}}^2 \sigma_{\text{dec}}^2 - \text{cov}_{\text{ra, dec}}^2}
 $$
 
-$90%$ sky area, in square degrees:
+and it satisfies $p(\text{source within }\Delta \Omega) = 1 - \exp(- \Delta \Omega / \Delta \Omega _{1 \sigma })$.
+With this we can compute the $90%$ sky area in square degrees:
 
-$$ \Delta \Omega_{90\%} \approx -  \log(1 - 0.9)  \Delta \Omega _{1 \sigma} \left( \frac{180\ \text{deg}}{\pi\ \text{rad}}\right)^2
+$$ \Delta \Omega_{90\%} = -  \log(1 - 0.9)  \Delta \Omega _{1 \sigma} \left( \frac{180\ \text{deg}}{\pi\ \text{rad}}\right)^2
 $$
-
-For GW170817, using the posterior covariance matrix, this approximation yields $28 \text{deg}^2$.
 
 ---
 
-#### GW150914 comparison
+## GW150914 comparison
 
 - $\sigma _{\mathcal{M}} / \mathcal{M} = \sigma_M / M \approx 3\%$: not so many cycles
 - two-detector event: sky area was $600 \text{deg}^2$, but the Gaussian approximation gives $1800 \text{deg}^2$.
 
 ---
 
-### Correlation structure
+## Correlation structure
 
-We can compute Pearson correlation coefficients:
+We can use Pearson correlation coefficients to visualize the (linear) **correlation structure** of the posterior:
+
 $$ \rho_{ij} = \frac{\operatorname{cov}(\theta _i, \theta_j)}{\sigma_i \sigma_j}
 $$
 
@@ -269,7 +271,7 @@ cov = np.loadtxt('../data/covariance_170817.txt')
 plot_correlations(cov, symbols)
 ```
 
----
+<!-- ---
 
 ```{python}
 symbols = np.array([
@@ -292,11 +294,11 @@ reshuffle = [0, 1, 9, 10, 11, 2, 5, 3, 4, 6, 7, 8]
 
 plot_correlations(cov[np.ix_(reshuffle, reshuffle)], symbols[reshuffle])
 
-```
+``` -->
 
 ---
 
-### Antenna pattern
+## Antenna pattern
 
 The strain at the detector depends on the antenna pattern:
 $$ h(t) = h_{ij} (t) D_{ij}(t) = h_+ (t) F_+ (t) + h_\times (t) F_\times (t) \,.
@@ -304,7 +306,7 @@ $$
 
 ---
 
-### Virgo antenna pattern
+## Virgo antenna pattern
 
 ```{python}
 from antenna_patterns import plot_antenna_pattern
@@ -313,7 +315,7 @@ plot_antenna_pattern('V1')
 
 ---
 
-### One ET antenna pattern
+## One ET antenna pattern
 
 ```{python}
 from antenna_patterns import plot_antenna_pattern
@@ -353,7 +355,7 @@ The covariance matrix can be evaluated in seconds, while
 full parameter estimation takes hours to weeks.
 
 Also, it is easy in the Fisher approach to account for new effects such as 
-the rotation of the Earth.
+**the rotation of the Earth**.
 
-Tricky step computationally: inverting $\mathcal{F}_{ij}$ to get $\mathcal{C}_{ij}$.
+Tricky step computationally: **inverting** $\mathcal{F}_{ij}$ to get $\mathcal{C}_{ij}$.
 
