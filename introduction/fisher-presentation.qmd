@@ -2,76 +2,141 @@
 format:
     beamer:
         code-fold: true
-        bibliography: Symposium.bib
+        bibliography: introduction.bib
         titlegraphic: ../data/logoET.png
         theme: boxes
 
 author: Jacopo Tissino, Ulyana Dupletsa
-subtitle: XIII ET symposium hackathon
 date: 2024-02-20
 ---
 
 # Fisher matrix for gravitational wave forecasting
 
 > When we build Einstein Telescope, how many compact binary signals will it be able to detect?
+
 > How well will it localize them in the sky?
-> How well will it measure their parameters, such as the radii of neutron stars?
+
+> How well will it measure their parameters?
+
+---
+
+## Matched filtering
+
+The gravitational-wave detection problem: we have data 
+
+$$ d(t) = \underbrace{h_\theta(t)}_{\text{GW}} + \underbrace{
+    n _{\text{Gaussian}} (t) + 
+    n _{\text{non-Gaussian}} (t)  
+}_{\text{noise}\  n(t)}
+$$
+
+and we want to find where $h(t)$ is, while typically $|h| \ll |n|$.
+The Gaussian component has a spectral density $S_n(f)$.
+Let's assume we want to use a linear filter:
+
+$$ \hat{\rho}(\tau ) = \int d(t + \tau) f(t) \text{d}t
+$$
+
+---
+
+We want to maximize the "distinguishability" of the signal: we can quantify it with the signal-to-noise ratio
+
+$$ \frac{S}{N} = \frac{\hat{\rho} (\text{a signal is present})}{ \text{root-mean-square of } \hat{\rho}}
+$$
+
+Ignoring the non-Gaussian part of the noise, the optimal solution is $\hat{\rho} \propto (d|h)$, where
+
+$$ (a | b) = 4 \Re \int_0^\infty \frac{a(f) b^*(f)}{S_n(f)}\text{d}f \,,
+$$
+
+---
+
+## Optimal signal-to-noise ratio
+
+The signal-to-noise ratio statistic is 
+
+$$ \rho = \frac{S}{N} = \frac{(d|h)}{\sqrt{(h|h)}}
+$$
+
+
+With the expected noise realization ($\langle n(t) \rangle = 0$):
+
+$$
+\rho _{\text{opt}} = \sqrt{(h|h)} = 2 \sqrt{\int_0^\infty \frac{|h(f)|^2}{S_n(f)} \text{d}f}
+\,.
+$$ 
+
+If we do not have the data, this is a good proxy. 
+For a real detector, we do injection studies and compute a False Alarm Rate (FAR).
+
+---
+
+## SNR thresholds
+
+> What is a "high enough" value for the SNR?
+
+Without time shifts nor non-Gaussianities, the SNR would simply follow
+a $\chi^2$ distribution with two degrees of freedom:
+"five $\sigma$" significance with a threshold of $\rho = 5.5$. 
+
+In real data this has to be estimated through injections:
+
+$$ \text{FAR} = \text{FAR}_8 \exp \left( - \frac{\rho - 8}{\alpha}\right) \,.
+$$
+
+For BNS in O1: $\alpha = 0.13$ and $\text{FAR}_8 = 30000 \text{yr}^{-1}$.
 
 ---
 
 ## Gravitational wave data analysis
 
-Gravitational wave data is modelled as signal plus additive noise: $d(t) = n(t) + h_\theta(t)$.
-
----
+Suppose we measure $d = h_\theta + n$, where our model for $h_\theta = h(t; \theta)$ depends on several parameter (typically, between 10 and 15).
 
 We can estimate the parameters $\theta$ by exploring the posterior distribution 
 
 $$ p(\theta | d) = \mathcal{L}(d | \theta ) \pi (\theta ) = \mathcal{N} \exp \left( (d | h_\theta) - \frac{1}{2} (h_\theta | h_\theta) \right) \pi (\theta )\,,
 $$
 
-where
-
-$$ (a | b) = 4 \Re \int_0^\infty \frac{a(f) b^*(f)}{S_n(f)}\text{d}f \,,
-$$
-
-while $\pi (\theta )$ is our prior distribution on the parameters.
+where $\pi (\theta )$ is our prior distribution on the parameters.
+We are neglecting non-Gaussianities in the noise, and assuming its spectral density is known!
 
 ---
 
-The posterior is explored stochastically, and we can compute summary statistics:
+The posterior is explored stochastically (with MCMC, nested sampling...) yielding many samples $\theta_i$ distributed according to $p(\theta | d)$, with which can compute summary statistics:
 
 - mean $\langle \theta_i \rangle$, 
 - variance $\sigma_i^2 = \langle (\theta_i- \langle \theta_i\rangle)^2 \rangle$, 
 - covariance $\mathcal{C}_{ij} =\langle (\theta_i- \langle \theta_i\rangle) (\theta_j- \langle \theta_j\rangle) \rangle$.
 
 At this stage, we are not making any approximation, and the 
-covariance matrix is just a summary tool. 
-
-## Signal-to-noise ratio
-
-The signal-to-noise ratio (SNR) statistic is $\rho = (d | h) / \sqrt{(h|h)}$.
-
-With the expected noise realization, 
-
-$$
-\rho \approx \sqrt{(h|h)} = 2 \sqrt{\int_0^\infty \frac{|h(f)|^2}{S_n(f)} \text{d}f}
-\,.
-$$ 
+covariance matrix is just a summary tool - the full posterior is still available.
 
 ---
 
-## SNR thresholds
+```{python}
+from multivariate_normal import MultivariateNormal
+n = MultivariateNormal([0, 0], [[1, 0.8], [0.8, 1]])
+n.plot_2d_analytical(0, 0, .9)
+```
 
-Without time shifts nor non-Gaussianities, the SNR would simply follow
-a $\chi^2$ distribution with two degrees of freedom:
-"five $\sigma$" significance with a threshold of $\rho = 5.5$. 
+---
 
-In real data, typically:
-$$ \text{FAR} = \text{FAR}_8 \exp \left( - \frac{\rho - 8}{\alpha}\right) \,.
-$$
+```{python}
+import numpy as np
+import matplotlib.pyplot as plt
+import corner
+import h5py
 
-For BNS in O1: $\alpha = 0.13$ and $\text{FAR}_8 = 30000 \text{yr}^{-1}$.
+# load GWTC-1 posterior for GW170817
+# from here: https://gwosc.org/eventapi/html/GWTC-1-confident/GW170817/v3/
+f = h5py.File('../data/GW170817_GWTC-1.hdf5', 'r')
+dataset = f['IMRPhenomPv2NRT_lowSpin_posterior']
+cosi = dataset['costheta_jn']
+dist = dataset['luminosity_distance_Mpc']
+
+corner.corner(np.vstack((np.arccos(cosi), dist)).T, labels=['Inclination angle [rad]', 'Distance [Mpc]'])
+```
+
 
 ---
 
@@ -131,7 +196,7 @@ $$
 
 ---
 
-$1 \sigma $ __sky area__ in steradians: 
+$1 \sigma$ __sky area__ in steradians: 
 $$ \Delta \Omega _{1 \sigma} = 2 \pi |\cos(\text{dec})| \sqrt{\sigma _{\text{ra}}^2 \sigma_{\text{dec}}^2 - \text{cov}_{\text{ra, dec}}^2}
 $$
 
@@ -267,7 +332,7 @@ $$
 where $\Delta \theta^i = \theta ^i - \langle \theta ^i \rangle$.
 
 A __multivariate normal distribution__, with covariance matrix $\mathcal{C}_{ij} = \mathcal{F}_{ij}^{-1}$.
-This is a good approximation in the high-SNR limit.
+This is a good approximation for the posterior in the high-SNR limit, since the prior matters less then.
 
 ---
 
@@ -287,12 +352,8 @@ $$
 The covariance matrix can be evaluated in seconds, while 
 full parameter estimation takes hours to weeks.
 
+Also, it is easy in the Fisher approach to account for new effects such as 
+the rotation of the Earth.
+
 Tricky step computationally: inverting $\mathcal{F}_{ij}$ to get $\mathcal{C}_{ij}$.
 
----
-
-```{python}
-from multivariate_normal import MultivariateNormal
-n = MultivariateNormal([0, 0], [[1, 0.8], [0.8, 1]])
-n.plot_2d_analytical(0, 0, .9)
-```
