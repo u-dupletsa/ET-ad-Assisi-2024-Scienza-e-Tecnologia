@@ -2,7 +2,7 @@
 format:
     html:
         code-fold: true
-        bibliography: Symposium.bib
+        bibliography: introduction.bib
         embed-resources: true
 ---
 
@@ -26,7 +26,7 @@ and then move to _analyzing_ it.
 The fundamental strategy used in order to detect gravitational wave signal is called _matched filtering_. 
 Consider a stream of data $d(t)$ consisting of a signal $h(t)$ plus additive Gaussian noise $n(t)$ described by a Power Spectral Density $S_n(f)$, such that $d(t) = n(t) + h(t)$.
 
-We want to "find" $h$ in a situation where the absolute value of $h(t)$ is much smaller than that of $n(t)$. A _linear filter_ can be used to this end: we will extract some function of the data in the form
+We want to detect $h$ in a situation where the absolute value of $h(t)$ is much smaller than that of $n(t)$. A _linear filter_ can be used to this end: we will extract some function of the data in the form
 
 $$ \hat{\rho}(\tau ) = \int d(t + \tau) f(t) \text{d}t
 $$
@@ -45,8 +45,8 @@ Let us define $(\cdot | \cdot)$ as the noise-weighed inner product between wavef
 $$ (a | b) = 4 \Re \int_0^\infty \frac{a(f) b^*(f)}{S_n(f)}\text{d}f \,,
 $$
 
-The optimal statistic $\hat{\rho}$ we want will then be proportional to $(d|h)$.
-A commonly-used way to normalize it, then, is to use 
+The optimal statistic $\hat{\rho}$ we want will then be (proportional to) $(d|h)$.
+Then, the signal-to-noise ratio will be:
 
 $$ \rho = \frac{\hat{\rho}}{\hat{\rho}_{\text{rms}}} = \frac{S}{N} = \frac{(d|h)}{(h|h)}
 $$
@@ -162,11 +162,11 @@ import h5py
 # load GWTC-1 posterior for GW170817
 # from here: https://gwosc.org/eventapi/html/GWTC-1-confident/GW170817/v3/
 f = h5py.File('../data/GW170817_GWTC-1.hdf5', 'r')
-cosi = f['IMRPhenomPv2NRT_lowSpin_posterior']['costheta_jn']
-dist = f['IMRPhenomPv2NRT_lowSpin_posterior']['luminosity_distance_Mpc']
+dataset = f['IMRPhenomPv2NRT_lowSpin_posterior']
+cosi = dataset['costheta_jn']
+dist = dataset['luminosity_distance_Mpc']
 
-corner.corner(np.vstack((cosi, dist)).T)
-plt.show()
+corner.corner(np.vstack((np.arccos(cosi), dist)).T, labels=['Inclination angle [rad]', 'Distance [Mpc]'])
 ```
 
 ## Parameter dependence of CBC signals
