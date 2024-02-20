@@ -23,6 +23,15 @@ and then move to _analyzing_ it.
 
 ## Gravitational wave detection
 
+The gravitational-wave **detection** problem statement is as follows: we have data 
+
+$$ d(t) = \underbrace{h_\theta(t)}_{\text{GW}} + \underbrace{
+    n _{\text{Gaussian}} (t) + 
+    n _{\text{non-Gaussian}} (t)  
+}_{\text{noise}\  n(t)}
+$$
+
+
 The fundamental strategy used in order to detect gravitational wave signal is called _matched filtering_. 
 Consider a stream of data $d(t)$ consisting of a signal $h(t)$ plus additive Gaussian noise $n(t)$ described by a Power Spectral Density $S_n(f)$, such that $d(t) = n(t) + h(t)$.
 
@@ -34,7 +43,7 @@ $$
 for some $f(t)$, such that this $\hat{\rho}$ peaks where the signal is, in as promiment a way as possible.
 Formally: we want the ratio 
 
-$$ \frac{S}{N} = \frac{\hat{\rho} (\text{a signal is present})}{\hat{\rho} (\text{root-mean-square})}
+$$ \frac{S}{N} = \frac{\hat{\rho} (\text{a signal is present})}{ \text{root-mean-square of } \hat{\rho}}
 $$
 
 to be as large as possible.
@@ -58,8 +67,13 @@ The signal-to-noise ratio (SNR) statistic $\rho$ for the data $d$, assuming a te
 $\rho = (d | h) / \sqrt{(h|h)}$.
 This is the quantity that matched-filter signal searches attempt to maximize. 
 In general this will be given by $\rho = [(n|h) + (h|h)] / \sqrt{(h|h)}$, but if we are performing a forecast
-we cannot know in advance what the noise realization will be. Fortunately, the average contribution
-of the term $(n|h)$ is zero, so the expectation value is just $\rho \approx \sqrt{(h|h)}$. 
+we cannot know in advance what the noise realization will be. Fortunately, the expected contribution
+of the term $(n|h)$ is zero since $\langle n(t) \rangle = 0$, so the expectation value is just $\rho \approx \sqrt{(h|h)}$: 
+
+$$
+\rho _{\text{opt}} = \sqrt{(h|h)} = 2 \sqrt{\int_0^\infty \frac{|h(f)|^2}{S_n(f)} \text{d}f}
+\,.
+$$ 
 
 This does not mean that we are neglecting the noise, since its _distribution_ $S_n$ is still taken 
 into account: for example, consider the behaviour under a global rescaling of the noise PSD: $\rho \propto 1 / \sqrt{S_n}$.
@@ -111,10 +125,7 @@ acceptable - the changes in detection horizon associated with different threshol
 this range are comparatively small, while the false alarm rate decreases exponentially.
 
 The SNR is easy to estimate and not too dependent on the 
-specifics of the waveform model: for one, it discards all phase information:
-
-$$ \text{SNR} = 2 \sqrt{\int_0^\infty \frac{|h(f)|^2}{S_n(f)} \text{d}f}
-$$
+specifics of the waveform model: for one, it discards all phase information, since the waveform appears in it as $|h(f)|^2$.
 
 and also waveform models for compact binaries differ significantly only in the 
 high-frequency region; for most of the inspiral the signal is decently
@@ -143,6 +154,28 @@ This makes it simple to compute summary statistics like the average of a paramet
 $\langle \theta_i \rangle$, the variance $\sigma_i^2 = \langle (\theta_i- \langle \theta_i\rangle)^2 \rangle$, as 
 well as covariances $\mathcal{C}_{ij} =\langle (\theta_i- \langle \theta_i\rangle) (\theta_j- \langle \theta_j\rangle) \rangle = \langle \Delta \theta ^i \Delta \theta ^j\rangle$.
 
+### Correlations
+
+Here is a graphical representation of correlation: the distribution for a multivariate normal with correlation matrix 
+
+$$ \mathcal{C} = \left[\begin{array}{cc}
+1 & 0.8 \\ 
+0.8 & 1
+\end{array}\right]
+$$
+
+
+```{python}
+from multivariate_normal import MultivariateNormal
+n = MultivariateNormal([0, 0], [[1, 0.8], [0.8, 1]])
+n.plot_2d_analytical(0, 0, .9)
+```
+
+When dealing with the _correlation matrix_ marginalizing 
+simply amounts to ignoring some parameters, but crucially
+in the _Fisher matrix_ this is not the case, since the 
+inversion introduces mixing between the parameters.
+
 At this stage, we are not making any approximation, and the 
 covariance matrix is just a summary tool. 
 
@@ -151,7 +184,7 @@ they do not tell the whole story especially in the regime where the error $\sigm
 with the signal.
 For those cases, in general, if the posterior is available the best idea is to plot it; 
 this is typically done as a corner plot, which shows the correlations among different 
-parameters.
+parameters. Here is an example showing the correlation between distance and inclination angle for GW170817.
 
 ```{python}
 import numpy as np
@@ -167,6 +200,7 @@ cosi = dataset['costheta_jn']
 dist = dataset['luminosity_distance_Mpc']
 
 corner.corner(np.vstack((np.arccos(cosi), dist)).T, labels=['Inclination angle [rad]', 'Distance [Mpc]'])
+plt.show()
 ```
 
 ## Parameter dependence of CBC signals
@@ -373,6 +407,7 @@ except FileNotFoundError:
 
 :::
 
+
 ### Correlation structure
 
 For each pair of parameters $\theta_i$, $\theta_j$ we select after running a parameter estimation job,
@@ -443,33 +478,6 @@ from the intrinsic ones.
 This is qualitatively due to the fact that the extrinsic parameters are generally measured by _inter-detector_ amplitude
 and time of arrival _differences_, while intrinsic parameters are generally measured by _averages_ of amplitude
 and phase [@singerRapidBayesianPosition2016].
-
-```{python}
-symbols = np.array([
-    '$\\mathcal{M}$',
-    '$\\eta$',
-    '$d_L$',
-    '$\\theta$',
-    'ra',
-    '$\\iota$',
-    '$\\psi$',
-    '$t_{\\mathrm{coal}}$',
-    '$\\phi_{\\mathrm{coal}}$',
-    '$\\chi_{1z}$',
-    '$\\chi_{2z}$',
-    '$\\widetilde{\\Lambda}$',
-])
-
-cov = np.loadtxt('../data/gwfast_covariance.txt')
-
-# the Fisher matrix computed with GWfast was ordered 
-# in a different way from the one before - this 
-# is just a reordering of the parameters
-reshuffle = [0, 1, 9, 10, 11, 2, 5, 3, 4, 6, 7, 8]
-
-plot_correlations(cov[np.ix_(reshuffle, reshuffle)], symbols[reshuffle])
-
-```
 
 ### Antenna pattern
 
@@ -610,24 +618,15 @@ $$
 
 and then, across all noise realizations, the term $(n|\partial_i \partial_j h)$ is equal to zero on average.
 
-### Conditioning versus marginalizing
+### Conditioning vs marginalizing
 
 It is important to include all parameters when performing a Fisher matrix analysis.
 This is because not including a parameter which correlates to the one we care about in 
 the Fisher analysis is equivalent to __conditioning__ upon it having that specific value, 
 while the correct operation to be performed is __marginalizing__ over all possible values.
-
-Here is a graphical way to see the difference between conditioning and marginalizing 
-for correlated variables.
-
-```{python}
-from multivariate_normal import MultivariateNormal
-n = MultivariateNormal([0, 0], [[1, 0.8], [0.8, 1]])
-n.plot_2d_analytical(0, 0, .9)
-```
+These are different, as the figure in the [Correlations](#correlations) section shows.
 
 When dealing with the _correlation matrix_ marginalizing 
 simply amounts to ignoring some parameters, but crucially
 in the _Fisher matrix_ this is not the case, since the 
 inversion introduces mixing between the parameters.
-
